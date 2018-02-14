@@ -1,0 +1,49 @@
+JSON AST (compact format):
+
+
+======= solidityFiles/test2.sol =======
+{
+	"absolutePath" : "solidityFiles/test2.sol",
+	"exportedSymbols" : 
+	{
+		"BlankContract" : 
+		[
+			2
+		]
+	},
+	"id" : 3,
+	"nodeType" : "SourceUnit",
+	"nodes" : 
+	[
+		{
+			"id" : 1,
+			"literals" : 
+			[
+				"solidity",
+				"^",
+				"0.4",
+				".0"
+			],
+			"nodeType" : "PragmaDirective",
+			"src" : "0:23:0"
+		},
+		{
+			"baseContracts" : [],
+			"contractDependencies" : [],
+			"contractKind" : "contract",
+			"documentation" : "Test contract for solc ast-json\n Another line",
+			"fullyImplemented" : true,
+			"id" : 2,
+			"linearizedBaseContracts" : 
+			[
+				2
+			],
+			"name" : "BlankContract",
+			"nodeType" : "ContractDefinition",
+			"nodes" : [],
+			"scope" : 3,
+			"src" : "78:26:0"
+		}
+	],
+	"src" : "0:105:0"
+}

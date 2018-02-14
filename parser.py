@@ -1,164 +1,217 @@
 import json
 import sys
+import re
+
+binary_op_to_english = {"*":" multiplied by ", "/":" divided by ", "%":" remainder of ", "+":" added to ", "-":" substracted by ", "&&":" and ", "||":" or ", ">":" is greater than ", "<":" is less than ", ">=":" is greater than or equal to ", "<=":" is less than or equal to ", "==":" is equal to ", "!=":" is not equal to "}
+unary_op_to_english = {"++":" add one to ", "--":" remove one from ", "!":" not ", "-":" negative of "}
+assignment_op_to_english = {"=":" is ", "+=":" gains ", "-=":" loses ", "*=":" multiplied by ", "/=":" divided by ", "%=":" moded by "}
+msg_members_to_english = {"data":" the complete calldata ", "gas":" the remaining gas (money) ", "sender":" the sender ", "sig":" the function the sender activated ", "value":" the etherium sent by the sender "}
+
+# Descriptive phrases that will be added to the original solc json: {description: "~~~"}
+description = ""
+msg_found = False
+
+def append_description(_str):
+    """Separate any snace_case or CamelCase words before adding to descrption"""
+    global description
+    space_sep_str = re.sub('([A-Z]+)', r' \1', _str).lower()
+    space_sep_str = re.sub('_', r' \1', space_sep_str).lower()
+    description += " " + space_sep_str + " "
+
+def add_description_json(js):
+    """Remove any extra spaces between words before adding a new json descrption entry"""
+    global description
+    single_space_sep_desc = re.sub(' +', ' ', description)
+    js["description"] = single_space_sep_desc
+    print(single_space_sep_desc)
+    discription = ""
 
 def parse_Literal(js):
     """A literal value, ex 42"""
-    print("In Literal: kind=" + js['kind'] + " value=" + js['value'])
+    #print("In Literal: kind=" + js['kind'] + " value=" + js['value'])
+    append_description(js['value'])
 
 def parse_Continue(js):
     """Continue key word"""
-    print("In Continue")
+    #print("In Continue")
+    pass
 
 def parse_PlaceholderStatement(js):
-    print("In PlaceholderStatement")
+    #print("In PlaceholderStatement")
+    pass
 
 def parse_ElementaryTypeNameExpression(js):
     """Contains type descriptions"""
-    print("In ElementaryTypeNameExpression")
+    #print("In ElementaryTypeNameExpression")
+    pass
 
 def parse_Identifier(js):
     """Name for a variable. Can be found inside a MemberAccess"""
-    print("In Identifier: name=" + js['name'])
+    #print("In Identifier: name=" + js['name'])
+    global msg_found
+    if js['name'] == 'msg':
+        msg_found = True
+    else:
+        append_description(js['name'])
 
 def parse_MemberAccess(js):
     """Index into a structure to extract a value"""
-    print("In MemberAccess: memberName=" + js['memberName'])
+    #print("In MemberAccess: memberName=" + js['memberName'])
+    global msg_found
     parse(js['expression'])
+    if msg_found:
+        append_description(msg_members_to_english[js['memberName']])
+        msg_found = False
 
 def parse_IndexAccess(js):
     """Index into an array, ex: arr[3]"""
-    print("In IndexAccess")
+    #print("In IndexAccess")
     parse(js['baseExpression'])
+    append_description(" of ")
     parse(js['indexExpression'])
 
 def parse_BinaryOperation(js):
     """An operator that acts on two values"""
-    print("In BinaryOperation: operator:" + js['operator'])
+    #print("In BinaryOperation: operator:" + js['operator'])
     parse(js['leftExpression'])
+    append_description(binary_op_to_english[js['operator']])
     parse(js['rightExpression'])
 
 def parse_UnaryOperation(js):
     """An operator that acts on one value"""
-    print("In UnaryOperation: operator: " + js['operator'])
+    #print("In UnaryOperation: operator: " + js['operator'])
+    append_descrption(unary_op_to_english[js['operator']])
     parse(js['subExpression'])
 
 def parse_Assignment(js):
     """Contains nodes to the left and right of the operator"""
-    print("In Assignment: operator:" + js['operator'])
+    #print("In Assignment: operator:" + js['operator'])
     parse(js['leftHandSide'])
+    append_description(assignment_op_to_english[js['operator']])
     parse(js['rightHandSide'])
 
 def parse_ExpressionStatement(js):
     """Node that indicates the line is an expression, such as an Assignment"""
-    print("In ExpressionStatement")
+    #print("In ExpressionStatement")
     parse(js['expression'])
+    add_description_json(js)
 
 def parse_IfStatement(js):
     """Declaration and parameters for an if statement
         May or may not have an else statement"""
-    print("In IfStatement")
+    #print("In IfStatement")
+    append_description(' if ')
     parse(js['condition'])
+    append_description(' then ')
     parse(js['trueBody'])
     if js['falseBody'] != None:
         parse(js['falseBody'])
 
 def parse_WhileStatement(js):
     """Declaration and parameters for a while statement"""
-    print("In WhileStatement")
+    #print("In WhileStatement")
+    append_description(' while ')
     parse(js['condition'])
+    append_description(' loop ')
     parse(js['body'])
 
 def parse_ForStatement(js):
     """Declaration and parameters for a for statement"""
-    print("In ForStatement")
+    #print("In ForStatement")
+    append_description(' for ')
     parse(js['initializationExpression'])
     parse(js['condition'])
     parse(js['loopExpression'])
+    append_description(' loop ')
     parse(js['body'])
 
 def parse_Block(js):
     """Contains a list of statements and is widely used to organize 
         other nodes such as FunctionDefinitions"""
-    print("In Block")
+    #print("In Block")
     for js_expression in js['statements']:
         parse(js_expression)
 
 def parse_TupleExpression(js):
     """Indicates use of a tuple"""
-    print("In TupleExpression")
+    #print("In TupleExpression")
     for component in js['components']:
         parse(component)
 
 def parse_ArrayTypeName(js):
     """The type for an array, ex int[]"""
-    print("In ArrayTypeName")
+    #print("In ArrayTypeName")
     parse(js['baseType'])
 
 def parse_UserDefinedTypeName(js):
     """Indicates declaring a new user defined enumeration type"""
-    print("In UserDefinedTypeName: name=" + js['name'])
+    #print("In UserDefinedTypeName: name=" + js['name'])
+    pass
 
 def parse_EnumDefinition(js):
-    print("In EnumDefinition: name=" + js['name'])
+    #print("In EnumDefinition: name=" + js['name'])
     for member in js['members']:
         parse(member)
 
 def parse_EnumValue(js):
     """Usage of an Enumeration Value"""
-    print("In EnumValue: name=" + js['name'])
+    #print("In EnumValue: name=" + js['name'])
+    pass
 
 def parse_StructDefinition(js):
     """Definition for a new structure datatype"""
-    print("In StructDefinition: name=" + js['name'])
+    #print("In StructDefinition: name=" + js['name'])
     for member in js['members']:
         parse(member)
 
 def parse_ParameterList(js):
     """A list of parameters that may be passed to a function, constructor, etc"""
-    print("In ParameterList")
+    #print("In ParameterList")
     for param in js['parameters']:
         parse(param)
 
 def parse_Return(js):
     """Return statement from a function"""
-    print("In Return")
-    parse(js['expression'])
+    #print("In Return")
+    if js['expression'] != None:
+        parse(js['expression'])
 
 def parse_FunctionCall(js):
     """Contains all function calling params and values"""
-    print("In FunctionCall")
+    #print("In FunctionCall")
     parse(js['expression'])
     for arg in js['arguments']:
         parse(arg)
 
 def parse_FunctionDefinition(js):
     """Indicates the top of a function definition"""
-    print("In FunctionDefinition: name=" + js['name'] + " payable=" + str(js['payable']))
+    #print("In FunctionDefinition: name=" + js['name'] + " payable=" + str(js['payable']))
     parse(js['body'])
 
 def parse_ModifierDefinition(js):
     """Definition for a modifier, like a wrapper function"""
-    print("In ModifierDefinition: name=" + js['name'])
+    #print("In ModifierDefinition: name=" + js['name'])
     parse(js['parameters'])
     parse(js['body'])
 
 def parse_EventDefinition(js):
     """Indicates the top of an event definition (like a wrapper function)"""
-    print("In EventDefinition name=" + js['name'])
+    #print("In EventDefinition name=" + js['name'])
     parse(js['parameters'])
 
 def parse_ElementaryTypeName(js):
     """Gives the type of an elementary type, ex byte32"""
-    print("In ElementaryTypeName")
+    #print("In ElementaryTypeName")
+    pass
 
 def parse_Mapping(js):
     """Indicates that we are declaring a mapping variable"""
-    print("In Mapping")
+    #print("In Mapping")
     parse(js['keyType'])
     parse(js['valueType'])
 
 def parse_VariableDeclarationStatement(js):
-    print("In VariableDeclarationStatement")
+    #print("In VariableDeclarationStatement")
     if js['initialValue'] != None:
         parse(js['initialValue'])
     for declaration in js['declarations']:
@@ -166,21 +219,23 @@ def parse_VariableDeclarationStatement(js):
 
 def parse_VariableDeclaration(js):
     """Contains one contract-wide variable declaration"""
-    print("In VariableDeclaration: name=" + js['name'])
+    #print("In VariableDeclaration: name=" + js['name'])
+    pass
 
 def parse_ContractDefinition(js):
     """Top of a contract"""
-    print("In ContractDefinition: name=" + js['name'])
+    #print("In ContractDefinition: name=" + js['name'])
     for js_node in js['nodes']:
         parse(js_node)
 
 def parse_PragmaDirective(js):
     """Indicates the solidity type we are compiling with"""
-    print("In PragmaDirective")
+    #print("In PragmaDirective")
+    pass
 
 def parse_SourceUnit(js):
     """Top level node that holds all nodes"""
-    print("In SourceUnit")
+    #print("In SourceUnit")
     for js_node in js['nodes']:
         parse(js_node)
 
