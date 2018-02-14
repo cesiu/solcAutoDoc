@@ -5,23 +5,32 @@ import re
 binary_op_to_english = {"*":" multiplied by ", "/":" divided by ", "%":" remainder of ", "+":" added to ", "-":" substracted by ", "&&":" and ", "||":" or ", ">":" is greater than ", "<":" is less than ", ">=":" is greater than or equal to ", "<=":" is less than or equal to ", "==":" is equal to ", "!=":" is not equal to "}
 unary_op_to_english = {"++":" add one to ", "--":" remove one from ", "!":" not ", "-":" negative of "}
 assignment_op_to_english = {"=":" is ", "+=":" gains ", "-=":" loses ", "*=":" multiplied by ", "/=":" divided by ", "%=":" moded by "}
-msg_members_to_english = {"data":" the complete calldata ", "gas":" the remaining gas (money) ", "sender":" the sender ", "sig":" the function the sender activated ", "value":" the etherium sent by the sender "}
+msg_members_to_english = {"data":" the complete calldata ", "gas":" the remaining money in this function ", "sender":" the money sender ", "sig":" the function the sender activated ", "value":" the money sent by the sender "}
 
 # Descriptive phrases that will be added to the original solc json: {description: "~~~"}
 description = ""
 msg_found = False
+found_first_function = False # Dont comment code above the first function
+                             # Code above first function are variable and struct definitions
+in_for_loop_header = False
 
 def append_description(_str):
-    """Separate any snace_case or CamelCase words before adding to descrption"""
-    global description
-    space_sep_str = re.sub('([A-Z]+)', r' \1', _str).lower()
-    space_sep_str = re.sub('_', r' \1', space_sep_str).lower()
-    description += " " + space_sep_str + " "
+    """Separate any snace_case or CamelCase words before adding to description"""
+    global description, found_first_function
+    if found_first_function:
+        space_sep_str = re.sub('([A-Z]+)', r' \1', _str).lower()
+        space_sep_str = re.sub('_', r' \1', space_sep_str).lower()
+        description += " " + space_sep_str + " "
 
 def add_description_json(js):
-    """Remove any extra spaces between words before adding a new json descrption entry"""
+    """Remove any extra spaces between words before adding a new json description entry
+       Called from ExpressionStatement nodes"""
     global description
+    # Remove any extra spaces
     single_space_sep_desc = re.sub(' +', ' ', description)
+    # Smoosh together apostrophes and commas
+    single_space_sep_desc = re.sub(' \'', '\'', single_space_sep_desc)
+    single_space_sep_desc = re.sub(' ,', ',', single_space_sep_desc)
     js["description"] = single_space_sep_desc
     print(single_space_sep_desc)
     description = ""
@@ -62,12 +71,14 @@ def parse_MemberAccess(js):
     if msg_found:
         append_description(msg_members_to_english[js['memberName']])
         msg_found = False
+    else:
+        append_description('\'s ' + js['memberName'] + ' ')
 
 def parse_IndexAccess(js):
     """Index into an array, ex: arr[3]"""
     #print("In IndexAccess")
     parse(js['baseExpression'])
-    append_description(" of ")
+    append_description(" list at ")
     parse(js['indexExpression'])
 
 def parse_BinaryOperation(js):
@@ -80,7 +91,7 @@ def parse_BinaryOperation(js):
 def parse_UnaryOperation(js):
     """An operator that acts on one value"""
     #print("In UnaryOperation: operator: " + js['operator'])
-    append_descrption(unary_op_to_english[js['operator']])
+    append_description(unary_op_to_english[js['operator']])
     parse(js['subExpression'])
 
 def parse_Assignment(js):
@@ -105,25 +116,34 @@ def parse_IfStatement(js):
     append_description(' then ')
     parse(js['trueBody'])
     if js['falseBody'] != None:
+        append_description(' else ')
         parse(js['falseBody'])
+    append_description(' end if\n ')
 
 def parse_WhileStatement(js):
     """Declaration and parameters for a while statement"""
     #print("In WhileStatement")
     append_description(' while ')
     parse(js['condition'])
-    append_description(' loop ')
+    append_description(' \nloop ')
     parse(js['body'])
+    append_description(' end loop\n ')
 
 def parse_ForStatement(js):
     """Declaration and parameters for a for statement"""
     #print("In ForStatement")
+    global in_for_loop_header
+    in_for_loop_header = True
     append_description(' for ')
     parse(js['initializationExpression'])
+    append_description(' , ')
     parse(js['condition'])
+    append_description(' , ')
     parse(js['loopExpression'])
+    in_for_loop_header = False
     append_description(' loop ')
     parse(js['body'])
+    append_description(' end loop\n ')
 
 def parse_Block(js):
     """Contains a list of statements and is widely used to organize 
@@ -186,6 +206,8 @@ def parse_FunctionCall(js):
 def parse_FunctionDefinition(js):
     """Indicates the top of a function definition"""
     #print("In FunctionDefinition: name=" + js['name'] + " payable=" + str(js['payable']))
+    global found_first_function
+    found_first_function = True
     parse(js['body'])
 
 def parse_ModifierDefinition(js):
@@ -211,16 +233,26 @@ def parse_Mapping(js):
     parse(js['valueType'])
 
 def parse_VariableDeclarationStatement(js):
+    """Declare a list of variables. ex: i, j, k = 0;"""
     #print("In VariableDeclarationStatement")
-    if js['initialValue'] != None:
-        parse(js['initialValue'])
+    declarations_size = len(js['declarations'])
     for declaration in js['declarations']:
         parse(declaration)
+        if declarations_size > 1:
+            append_description(' and ')
+        declarations_size -= 1
+    append_description(' is ')
+    if js['initialValue'] != None:
+        parse(js['initialValue'])
+    else:
+        append_description(' default value ')
+    if not in_for_loop_header:
+        add_description_json(js)
 
 def parse_VariableDeclaration(js):
     """Contains one contract-wide variable declaration"""
     #print("In VariableDeclaration: name=" + js['name'])
-    pass
+    append_description(js['name'])
 
 def parse_ContractDefinition(js):
     """Top of a contract"""

@@ -61,7 +61,7 @@ contract Ballot {
     }
 
     /// Delegate your vote to the voter `to`.
-    function delegate(address to) public {
+    function delegate(address to) public { #json line: 1553
         // assigns reference
         Voter storage sender = voters[msg.sender];
         require(!sender.voted);
