@@ -24,7 +24,7 @@ def add_description_json(js):
     single_space_sep_desc = re.sub(' +', ' ', description)
     js["description"] = single_space_sep_desc
     print(single_space_sep_desc)
-    discription = ""
+    description = ""
 
 def parse_Literal(js):
     """A literal value, ex 42"""
