@@ -49,10 +49,17 @@ def parse(string, cfg):
     return (tree, tags)
 
 
-# Preprocesses strings; greedily combines "noun-verb" pairs into clauses.
+# Preprocesses strings, greedily combining pairs.
 # strings - A list of strings
 # Returns the preprocessed list of strings
 def preproc(strings):
+    return preproc_clauses(preproc_phrases(strings))
+
+
+# Preprocesses strings, greedily combining "noun-verb" pairs.
+# strings - A list of strings
+# Returns the preprocessed list of strings
+def preproc_clauses(strings):
     global _grammar
 
     if len(strings) < 2:
@@ -60,9 +67,29 @@ def preproc(strings):
     else:
         if is_noun_phrase(*parse(strings[0], _grammar)) \
            and is_verb_phrase(*parse(strings[1], _grammar)):
-            return ["%s %s" % (strings[0], strings[1])] + preproc(strings[2:])
+            return ["%s %s" % (strings[0], strings[1])] \
+                    + preproc_clauses(strings[2:])
         else:
-            return [strings[0]] + preproc(strings[1:])
+            return [strings[0]] + preproc_clauses(strings[1:])
+
+
+# Preprocesses strings, greedily combining "noun-noun" and "verb-verb" pairs.
+# strings - A list of strings
+# Returns the preprocessed list of strings
+def preproc_phrases(strings):
+    global _grammar
+
+    if len(strings) < 2:
+        return strings
+    else:
+        if is_noun_phrase(*parse(strings[0], _grammar)) \
+           and is_noun_phrase(*parse(strings[1], _grammar)) \
+           or is_verb_phrase(*parse(strings[0], _grammar)) \
+           and is_verb_phrase(*parse(strings[1], _grammar)):
+            return preproc_phrases(["%s and %s" % (strings[0], strings[1])]
+                                   + strings[2:])
+        else:
+            return [strings[0]] + preproc_phrases(strings[1:])
 
 
 # Combines two strings.
@@ -95,10 +122,7 @@ def concat(ind_str, dep_str):
                 return "%s after %s" % (dep_str, ind_str)
             else:
                 # Neither is a clause.
-                if is_noun_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
-                    return "%s %s" % (ind_str, dep_str)
-                else:
-                    return "%s and %s" % (ind_str, dep_str)
+                return "%s and %s" % (ind_str, dep_str)
 
 
 # Helps determine whether or not a string is a clause.
