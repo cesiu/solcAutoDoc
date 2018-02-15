@@ -1,0 +1,7 @@
+ minter is the money sender 
+ if the money sender is not equal to minter then end if
+ balances list at receiver gains amount 
+ if balances list at the money sender is less than amount then end if
+ balances list at the money sender loses amount 
+ balances list at receiver gains amount 
+ sent the money sender receiver amount 
