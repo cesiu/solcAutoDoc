@@ -17,7 +17,8 @@ nltk.download('averaged_perceptron_tagger')
 # TODO: It definitely does not consider declension or conjugation.
 #       Gerunds are tagged as participles...that might be okay, actually.
 #       Compound nouns can't be parsed.
-#       At some point, we should allow commas to replace repeated conjuncitons.
+#       At some point, we should allow commas to replace repeated conjunctions.
+#       NLTK's tagging is really bad at confusing helping verbs for gerunds.
 _verbs = ["VB", "VBD", "VBP", "VBZ"]
 _grammar = nltk.CFG.fromstring("""
  Root -> NounP VerbP | NounP VerbP 'CC' Root | NounP | VerbP | 'UH'
@@ -45,7 +46,6 @@ PartW -> 'VBG' | 'VBN'
 def parse(string, cfg):
     tags = nltk.pos_tag(nltk.word_tokenize(string))
     tree = next(nltk.ChartParser(cfg).parse([tag[1] for tag in tags]), None)
-
     return (tree, tags)
 
 
