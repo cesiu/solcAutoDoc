@@ -1,3 +1,7 @@
+# Parses solc --ast-compact-json output. Produces code->English translations. Places translations into tree.
+# Eric LaBouve (elabouve@calpoly.edu)
+# CSC 570, Winter '18
+
 import json
 import sys
 import re
@@ -15,11 +19,12 @@ found_first_function = False # Dont comment code above the first function
 in_for_loop_header = False
 
 def append_description(_str):
-    """Separate any snace_case or CamelCase words before adding to description"""
+    """Separate any snake_case or CamelCase words before adding to description"""
     global description, found_first_function
     if found_first_function:
         space_sep_str = re.sub('([A-Z]+)', r' \1', _str).lower()
-        space_sep_str = re.sub('_', r' \1', space_sep_str).lower()
+#        space_sep_str = re.sub('_', r' \1', space_sep_str).lower()
+        space_sep_str = re.sub('_', ' ', space_sep_str).lower()
         description += " " + space_sep_str + " "
 
 def add_description_json(js):
@@ -118,7 +123,7 @@ def parse_IfStatement(js):
     if js['falseBody'] != None:
         append_description(' else ')
         parse(js['falseBody'])
-    append_description(' end if\n ')
+    append_description(' endif\n ')
 
 def parse_WhileStatement(js):
     """Declaration and parameters for a while statement"""
@@ -127,7 +132,7 @@ def parse_WhileStatement(js):
     parse(js['condition'])
     append_description(' \nloop ')
     parse(js['body'])
-    append_description(' end loop\n ')
+    append_description(' endloop\n ')
 
 def parse_ForStatement(js):
     """Declaration and parameters for a for statement"""
@@ -143,7 +148,7 @@ def parse_ForStatement(js):
     in_for_loop_header = False
     append_description(' loop ')
     parse(js['body'])
-    append_description(' end loop\n ')
+    append_description(' endloop\n ')
 
 def parse_Block(js):
     """Contains a list of statements and is widely used to organize 
