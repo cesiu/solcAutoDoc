@@ -38,15 +38,27 @@ PartW -> 'VBG' | 'VBN'
 """ % " | ".join(["'%s'" % verb for verb in _verbs]))
 
 
-# Tags and arses a string using a CFG.
+# Tags and parses a string using a CFG.
 # string - The string to parse
 # cfg - The CFG with which to parse the string
 # Returns a pair containing the first parse tree (or None if the string could
 #  not be parsed) and the POS tags.
+_parse_memo = {}
 def parse(string, cfg):
-    tags = nltk.pos_tag(nltk.word_tokenize(string))
-    tree = next(nltk.ChartParser(cfg).parse([tag[1] for tag in tags]), None)
-    return (tree, tags)
+    # We're going to call parse a lot. Memoizing it speeds things up and allows
+    #  us to artificially indicate that a string has a particular parse tree.
+    global _parse_memo
+
+    if string in _parse_memo:
+        return _parse_memo[string]
+    else:
+        tags = nltk.pos_tag(nltk.word_tokenize(string))
+        tree = next(nltk.ChartParser(cfg).parse([tag[1] for tag in tags]),
+                    None)
+        _parse_memo[string] = (tree, tags)
+        print("Parsing \"%s\"..." % string)
+        print(tree)
+        return (tree, tags)
 
 
 # Preprocesses strings, greedily combining pairs.
@@ -60,15 +72,25 @@ def preproc(strings):
 # strings - A list of strings
 # Returns the preprocessed list of strings
 def preproc_clauses(strings):
-    global _grammar
+    global _grammar, _parse_memo
 
     if len(strings) < 2:
         return strings
     else:
-        if is_noun_phrase(*parse(strings[0], _grammar)) \
-           and is_verb_phrase(*parse(strings[1], _grammar)):
-            return ["%s %s" % (strings[0], strings[1])] \
-                    + preproc_clauses(strings[2:])
+        ind_tree = parse(strings[0], _grammar)
+        dep_tree = parse(strings[1], _grammar)
+
+        if is_noun_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
+            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+
+            string = "%s %s" % (strings[0], strings[1])
+            # Artificially instruct parse how to handle this new string.
+            _parse_memo[string] = (nltk.tree.Tree("Root", [
+                                       nltk.tree.Tree("NounP", [ind_tree[0]]),
+                                       nltk.tree.Tree("VerbP", [dep_tree[0]])
+                                   ]),
+                                   ind_tree[1] + dep_tree[1])
+            return [string] + preproc_clauses(strings[2:])
         else:
             return [strings[0]] + preproc_clauses(strings[1:])
 
@@ -77,17 +99,39 @@ def preproc_clauses(strings):
 # strings - A list of strings
 # Returns the preprocessed list of strings
 def preproc_phrases(strings):
-    global _grammar
+    global _grammar, _parse_memo
 
     if len(strings) < 2:
         return strings
     else:
-        if is_noun_phrase(*parse(strings[0], _grammar)) \
-           and is_noun_phrase(*parse(strings[1], _grammar)) \
-           or is_verb_phrase(*parse(strings[0], _grammar)) \
-           and is_verb_phrase(*parse(strings[1], _grammar)):
-            return preproc_phrases(["%s and %s" % (strings[0], strings[1])]
-                                   + strings[2:])
+        ind_tree = parse(strings[0], _grammar)
+        dep_tree = parse(strings[1], _grammar)
+
+        if is_noun_phrase(*ind_tree) and is_noun_phrase(*dep_tree):
+            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+
+            string = "%s and %s" % (strings[0], strings[1])
+            # Artificially instruct parse how to handle this new string.
+            _parse_memo[string] = (nltk.tree.Tree("NounP", [
+                                       nltk.tree.Tree("NounP", [ind_tree[0]]),
+                                       "CC",
+                                       nltk.tree.Tree("NounP", [dep_tree[0]])
+                                   ]),
+                                   ind_tree[1] + [("and", "CC")] + dep_tree[1])
+
+            return preproc_phrases([string] + strings[2:])
+        elif is_verb_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
+            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+
+            string = "%s and %s" % (strings[0], strings[1])
+            # Artificially instruct parse how to handle this new string.
+            _parse_memo[string] = (nltk.tree.Tree("VerbP", [
+                                       nltk.tree.Tree("VerbP", [ind_tree[0]]),
+                                       "CC",
+                                       nltk.tree.Tree("VerbP", [dep_tree[0]])
+                                   ]),
+                                   ind_tree[1] + [("and", "CC")] + dep_tree[1])
+            return preproc_phrases([string] + strings[2:])
         else:
             return [strings[0]] + preproc_phrases(strings[1:])
 
@@ -131,6 +175,7 @@ def concat(ind_str, dep_str):
 # Returns True if the string is a clause and False otherwise.
 def is_clause(tree, tags):
     return tree is not None and len(tree) >= 2 \
+           and tree.label() == "Root" \
            and tree[0].label() == "NounP" \
            and tree[1].label() == "VerbP"
 
@@ -143,7 +188,10 @@ def is_noun_phrase(tree, tags):
     global _verbs
 
     if tree is not None:
-        return len(tree) == 1 and tree[0].label() == "NounP"
+        return len(tree) >= 1 and (
+                len(tree) == 1 and tree.label() == "Root"
+                and tree[0].label() == "NounP"
+                or tree.label() == "NounP")
     else:
         return reduce(lambda p, tag: p and tag[1] not in _verbs, tags, True)
 
@@ -156,22 +204,22 @@ def is_verb_phrase(tree, tags):
     global _verbs
 
     if tree is not None:
-        return len(tree) == 1 and tree[0].label() == "VerbP"
+        return len(tree) >= 1 and (
+                len(tree) == 1 and tree.label() == "Root"
+                and tree[0].label() == "VerbP"
+                or tree.label() == "VerbP")
     else:
         return reduce(lambda p, tag: p or tag[1] in _verbs, tags, False)
 
 
 def main(argv):
-    paragraph = ""
-
     # TODO: This combines sentences linearly, one after the other. For better
     #       results, suggest combining in an order informed by the AST.
     with open(argv[1], "r") as string_file:
         strings = preproc([string.strip() for string in string_file])
-        for string in strings:
-            paragraph = concat(paragraph, string)
+        paragraph = reduce(concat, strings, "")
 
-    print(paragraph)
+        print("\n%s" % paragraph)
 
 
 if __name__ == "__main__":
