@@ -163,7 +163,7 @@ def concat(ind_str, dep_str):
         if is_clause(*ind_tree):
             if is_clause(*dep_tree):
                 # Both are clauses.
-                string = "%s and %s" % (ind_str, dep_str)
+                string = "%s and then %s" % (ind_str, dep_str)
 
                 # Artificially instruct parse how to handle this new string.
                 _parse_memo[string] = (
@@ -220,6 +220,7 @@ def concat(ind_str, dep_str):
             else:
                 # Neither is a clause.
                 # TODO: This should never come up after preprocessing.
+                print("HERE")
                 return "%s and %s" % (ind_str, dep_str)
 
 
@@ -228,10 +229,12 @@ def concat(ind_str, dep_str):
 # tags - The string's POS tags.
 # Returns True if the string is a clause and False otherwise.
 def is_clause(tree, tags):
-    return tree is not None and len(tree) >= 2 \
-           and tree.label() == "Root" \
-           and tree[0].label() == "NounP" \
-           and tree[1].label() == "VerbP"
+    return tree is not None and tree.label() == "Root" \
+            and ((len(tree) == 2 and
+                  tree[0].label() == "NounP" and tree[1].label() == "VerbP")
+                 or
+                 (len(tree) == 3 and
+                  tree[0].label() == "Root" and tree[2].label() == "Root"))
 
 
 # Helps determine whether or not a string is a noun phrase.
