@@ -4,6 +4,7 @@
 
 import sys
 from functools import reduce
+from copy import deepcopy
 
 # This is how the magic works:
 import nltk
@@ -21,7 +22,7 @@ nltk.download('averaged_perceptron_tagger')
 #       NLTK's tagging is really bad at confusing helping verbs for gerunds.
 _verbs = ["VB", "VBD", "VBP", "VBZ"]
 _grammar = nltk.CFG.fromstring("""
- Root -> NounP VerbP | NounP VerbP 'CC' Root | NounP | VerbP | 'UH'
+ Root -> NounP VerbP | Root 'CC' Root | NounP | VerbP | 'UH'
  InfP -> 'TO' VerbP
 NounP -> NounP 'CC' NounP | AdjP NounP | NounP AdjP | InfP | GerP | NounW
 VerbP -> VerbP 'CC' VerbP | AdvP VerbP | VerbP AdvP | VerbP NounP | VerbP AdjP | VerbW
@@ -82,14 +83,15 @@ def preproc_clauses(strings):
 
         if is_noun_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
             print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
-
             string = "%s %s" % (strings[0], strings[1])
+
             # Artificially instruct parse how to handle this new string.
-            _parse_memo[string] = (nltk.tree.Tree("Root", [
-                                       nltk.tree.Tree("NounP", [ind_tree[0]]),
-                                       nltk.tree.Tree("VerbP", [dep_tree[0]])
-                                   ]),
-                                   ind_tree[1] + dep_tree[1])
+            _parse_memo[string] = (
+                nltk.tree.Tree("Root", [
+                    nltk.tree.Tree("NounP", [ind_tree[0][0]]),
+                    nltk.tree.Tree("VerbP", [dep_tree[0][0]])
+                ]),
+                ind_tree[1] + dep_tree[1])
             return [string] + preproc_clauses(strings[2:])
         else:
             return [strings[0]] + preproc_clauses(strings[1:])
@@ -109,28 +111,33 @@ def preproc_phrases(strings):
 
         if is_noun_phrase(*ind_tree) and is_noun_phrase(*dep_tree):
             print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
-
             string = "%s and %s" % (strings[0], strings[1])
-            # Artificially instruct parse how to handle this new string.
-            _parse_memo[string] = (nltk.tree.Tree("NounP", [
-                                       nltk.tree.Tree("NounP", [ind_tree[0]]),
-                                       "CC",
-                                       nltk.tree.Tree("NounP", [dep_tree[0]])
-                                   ]),
-                                   ind_tree[1] + [("and", "CC")] + dep_tree[1])
 
+            # Artificially instruct parse how to handle this new string.
+            _parse_memo[string] = (
+                nltk.tree.Tree("Root", [
+                    nltk.tree.Tree("NounP", [
+                        nltk.tree.Tree("NounP", [ind_tree[0][0]]),
+                        "CC",
+                        nltk.tree.Tree("NounP", [dep_tree[0][0]])
+                    ])
+                ]),
+                ind_tree[1] + [("and", "CC")] + dep_tree[1])
             return preproc_phrases([string] + strings[2:])
         elif is_verb_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
             print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
-
             string = "%s and %s" % (strings[0], strings[1])
+
             # Artificially instruct parse how to handle this new string.
-            _parse_memo[string] = (nltk.tree.Tree("VerbP", [
-                                       nltk.tree.Tree("VerbP", [ind_tree[0]]),
-                                       "CC",
-                                       nltk.tree.Tree("VerbP", [dep_tree[0]])
-                                   ]),
-                                   ind_tree[1] + [("and", "CC")] + dep_tree[1])
+            _parse_memo[string] = (
+                nltk.tree.Tree("Root", [
+                    nltk.tree.Tree("VerbP", [
+                        nltk.tree.Tree("VerbP", [ind_tree[0][0]]),
+                        "CC",
+                        nltk.tree.Tree("VerbP", [dep_tree[0][0]])
+                    ])
+                ]),
+                ind_tree[1] + [("and", "CC")] + dep_tree[1])
             return preproc_phrases([string] + strings[2:])
         else:
             return [strings[0]] + preproc_phrases(strings[1:])
@@ -156,16 +163,63 @@ def concat(ind_str, dep_str):
         if is_clause(*ind_tree):
             if is_clause(*dep_tree):
                 # Both are clauses.
-                return "%s and %s" % (ind_str, dep_str)
+                string = "%s and %s" % (ind_str, dep_str)
+
+                # Artificially instruct parse how to handle this new string.
+                _parse_memo[string] = (
+                    nltk.tree.Tree("Root", [
+                        ind_tree[0],
+                        "CC",
+                        dep_tree[0]
+                    ]),
+                    ind_tree[1] + [("and", "CC")] + dep_tree[1])
+                return string
             else:
                 # The first is a clause, the second is not.
-                return "%s before %s" % (ind_str, dep_str)
+                string = "%s before %s" % (ind_str, dep_str)
+
+                # Artificially instruct parse how to handle this new string.
+                tree = nltk.tree.Tree("Root", [
+                    deepcopy(ind_tree[0][0]),
+                    nltk.tree.Tree("VerbP", [
+                        deepcopy(ind_tree[0][1]),
+                        nltk.tree.Tree("AdvP", [
+                            nltk.tree.Tree("PrepP", [
+                                "IN",
+                                deepcopy(dep_tree[0][0])
+                            ])
+                        ])
+                    ])
+                ])
+
+                _parse_memo[string] = (tree, ind_tree[1] + [("before", "IN")]
+                                             + dep_tree[1])
+                return string
         else:
             if is_clause(*dep_tree):
                 # The second is a clause, the first is not.
-                return "%s after %s" % (dep_str, ind_str)
+                string = "%s after %s" % (dep_str, ind_str)
+
+                # Artificially instruct parse how to handle this new string.
+                tree = nltk.tree.Tree("Root", [
+                    deepcopy(dep_tree[0][0]),
+                    nltk.tree.Tree("VerbP", [
+                        deepcopy(dep_tree[0][1]),
+                        nltk.tree.Tree("AdvP", [
+                            nltk.tree.Tree("PrepP", [
+                                "IN",
+                                deepcopy(ind_tree[0][0])
+                            ])
+                        ])
+                    ])
+                ])
+
+                _parse_memo[string] = (tree, dep_tree[1] + [("after", "IN")]
+                                             + ind_tree[1])
+                return string
             else:
                 # Neither is a clause.
+                # TODO: This should never come up after preprocessing.
                 return "%s and %s" % (ind_str, dep_str)
 
 
@@ -188,10 +242,8 @@ def is_noun_phrase(tree, tags):
     global _verbs
 
     if tree is not None:
-        return len(tree) >= 1 and (
-                len(tree) == 1 and tree.label() == "Root"
-                and tree[0].label() == "NounP"
-                or tree.label() == "NounP")
+        return len(tree) == 1 \
+               and tree.label() == "Root" and tree[0].label() == "NounP"
     else:
         return reduce(lambda p, tag: p and tag[1] not in _verbs, tags, True)
 
@@ -204,10 +256,8 @@ def is_verb_phrase(tree, tags):
     global _verbs
 
     if tree is not None:
-        return len(tree) >= 1 and (
-                len(tree) == 1 and tree.label() == "Root"
-                and tree[0].label() == "VerbP"
-                or tree.label() == "VerbP")
+        return len(tree) == 1 \
+               and tree.label() == "Root" and tree[0].label() == "VerbP"
     else:
         return reduce(lambda p, tag: p or tag[1] in _verbs, tags, False)
 
