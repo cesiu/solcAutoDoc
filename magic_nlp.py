@@ -268,11 +268,14 @@ def is_verb_phrase(tree, tags):
 def main(argv):
     # TODO: This combines sentences linearly, one after the other. For better
     #       results, suggest combining in an order informed by the AST.
-    with open(argv[1], "r") as string_file:
-        strings = preproc([string.strip() for string in string_file])
-        paragraph = reduce(concat, strings, "")
+    if argv[1] == "-":
+        strings = preproc([string.strip() for string in sys.stdin])
+    else:
+        with open(argv[1], "r") as string_file:
+            strings = preproc([string.strip() for string in string_file])
 
-        print("\n%s" % paragraph)
+    paragraph = reduce(concat, strings, "")
+    print("\n%s" % paragraph)
 
 
 if __name__ == "__main__":
