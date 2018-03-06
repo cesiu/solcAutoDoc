@@ -117,9 +117,11 @@ def preproc_phrases(strings):
             _parse_memo[string] = (
                 nltk.tree.Tree("Root", [
                     nltk.tree.Tree("NounP", [
-                        nltk.tree.Tree("NounP", [ind_tree[0][0]]),
+                        nltk.tree.Tree("NounP", [ind_tree[0][0] if ind_tree[0]
+                                                 else ind_tree[1]]),
                         "CC",
-                        nltk.tree.Tree("NounP", [dep_tree[0][0]])
+                        nltk.tree.Tree("NounP", [dep_tree[0][0] if dep_tree[0]
+                                                 else dep_tree[1]])
                     ])
                 ]),
                 ind_tree[1] + [("and", "CC")] + dep_tree[1])
@@ -132,9 +134,11 @@ def preproc_phrases(strings):
             _parse_memo[string] = (
                 nltk.tree.Tree("Root", [
                     nltk.tree.Tree("VerbP", [
-                        nltk.tree.Tree("VerbP", [ind_tree[0][0]]),
+                        nltk.tree.Tree("VerbP", [ind_tree[0][0] if ind_tree[0]
+                                                 else ind_tree[1]]),
                         "CC",
-                        nltk.tree.Tree("VerbP", [dep_tree[0][0]])
+                        nltk.tree.Tree("VerbP", [dep_tree[0][0] if dep_tree[0]
+                                                 else dep_tree[1]])
                     ])
                 ]),
                 ind_tree[1] + [("and", "CC")] + dep_tree[1])
