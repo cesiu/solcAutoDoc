@@ -58,8 +58,8 @@ def parse(string, cfg):
         tree = next(nltk.ChartParser(cfg).parse([tag[1] for tag in tags]),
                     None)
         _parse_memo[string] = (tree, tags)
-        print("Parsing \"%s\"..." % string)
-        print(tree)
+        # print("Parsing \"%s\"..." % string)
+        # print(tree)
         return (tree, tags)
 
 
@@ -83,7 +83,7 @@ def preproc_clauses(strings):
         dep_tree = parse(strings[1], _grammar)
 
         if is_noun_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
-            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+            # print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
             string = "%s %s" % (strings[0], strings[1])
 
             # Artificially instruct parse how to handle this new string.
@@ -113,7 +113,7 @@ def preproc_phrases(strings):
         dep_tree = parse(strings[1], _grammar)
 
         if is_noun_phrase(*ind_tree) and is_noun_phrase(*dep_tree):
-            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+            # print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
             string = "%s and %s" % (strings[0], strings[1])
 
             # Artificially instruct parse how to handle this new string.
@@ -130,7 +130,7 @@ def preproc_phrases(strings):
                 ind_tree[1] + [("and", "CC")] + dep_tree[1])
             return preproc_phrases([string] + strings[2:])
         elif is_verb_phrase(*ind_tree) and is_verb_phrase(*dep_tree):
-            print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
+            # print("Combining \"%s\" and \"%s\"..." % (strings[0], strings[1]))
             string = "%s and %s" % (strings[0], strings[1])
 
             # Artificially instruct parse how to handle this new string.
