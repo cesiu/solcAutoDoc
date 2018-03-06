@@ -170,7 +170,7 @@ def concat(ind_str, dep_str):
         if is_clause(*ind_tree):
             if is_clause(*dep_tree):
                 # Both are clauses.
-                string = "%s and then %s" % (ind_str, dep_str)
+                string = "%s.\nThen, %s" % (ind_str, dep_str)
 
                 # Artificially instruct parse how to handle this new string.
                 _parse_memo[string] = (
