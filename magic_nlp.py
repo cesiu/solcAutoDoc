@@ -24,18 +24,19 @@ _verbs = ["VB", "VBD", "VBP", "VBZ"]
 _grammar = nltk.CFG.fromstring("""
  Root -> NounP VerbP | Root 'CC' Root | NounP | VerbP | 'UH'
  InfP -> 'TO' VerbP
-NounP -> NounP 'CC' NounP | AdjP NounP | NounP AdjP | InfP | GerP | NounW
-VerbP -> VerbP 'CC' VerbP | AdvP VerbP | VerbP AdvP | VerbP NounP | VerbP AdjP | VerbW
+NounP -> NounP ConjW NounP | AdjP NounP | NounP AdjP | InfP | GerP | NounW
+VerbP -> VerbP ConjW VerbP | AdvP VerbP | VerbP AdvP | VerbP NounP | VerbP AdjP | VerbW
  AdjP -> AdvP AdjW | AdjW AdvP | InfP | PrepP | PartP | 'PDT' AdjW | AdjW
  AdvP -> AdvP AdvP | InfP | PrepP | AdvW
 PrepP -> 'TO' NounP | 'IN' NounP
  GerP -> PartP
-PartP -> PartP 'CC' PartP | AdvP PartP | PartP AdvP | PartP NounP | PartP AdjP | PartW
-NounW -> 'NN' | 'NNS' | 'NNP' | 'NNPS' | 'PRP' | 'WP' | 'CD'
+PartP -> PartP ConjW PartP | AdvP PartP | PartP AdvP | PartP NounP | PartP AdjP | PartW
+NounW -> 'NN' | 'NNS' | 'NNP' | 'NNPS' | 'PRP' | 'WP' | 'CD' | '$'
 VerbW -> %s
  AdjW -> 'JJ' | 'JJR' | 'JJS' | 'PRP$' | 'WP$' | 'DT' | 'WDT' | NounP 'POS' | 'CD'
  AdvW -> 'RB' | 'RBR' | 'RBS' | 'MD'
 PartW -> 'VBG' | 'VBN'
+ConjW -> 'CC' | ','
 """ % " | ".join(["'%s'" % verb for verb in _verbs]))
 
 
@@ -88,8 +89,10 @@ def preproc_clauses(strings):
             # Artificially instruct parse how to handle this new string.
             _parse_memo[string] = (
                 nltk.tree.Tree("Root", [
-                    nltk.tree.Tree("NounP", [ind_tree[0][0]]),
-                    nltk.tree.Tree("VerbP", [dep_tree[0][0]])
+                    nltk.tree.Tree("NounP", [ind_tree[0][0] if ind_tree[0]
+                                             else ind_tree[1]]),
+                    nltk.tree.Tree("VerbP", [dep_tree[0][0] if dep_tree[0]
+                                             else dep_tree[1]])
                 ]),
                 ind_tree[1] + dep_tree[1])
             return [string] + preproc_clauses(strings[2:])
@@ -190,7 +193,8 @@ def concat(ind_str, dep_str):
                         nltk.tree.Tree("AdvP", [
                             nltk.tree.Tree("PrepP", [
                                 "IN",
-                                deepcopy(dep_tree[0][0])
+                                deepcopy(dep_tree[0][0] if dep_tree[0]
+                                         else dep_tree[1])
                             ])
                         ])
                     ])
@@ -212,7 +216,8 @@ def concat(ind_str, dep_str):
                         nltk.tree.Tree("AdvP", [
                             nltk.tree.Tree("PrepP", [
                                 "IN",
-                                deepcopy(ind_tree[0][0])
+                                deepcopy(ind_tree[0][0] if dep_tree[0]
+                                         else dep_tree[1])
                             ])
                         ])
                     ])
