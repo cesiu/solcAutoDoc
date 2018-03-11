@@ -170,7 +170,7 @@ def concat(ind_str, dep_str):
         if is_clause(*ind_tree):
             if is_clause(*dep_tree):
                 # Both are clauses.
-                string = "%s.\nThen, %s" % (ind_str, dep_str)
+                string = "%s\n\nThen, %s" % (ind_str, dep_str)
 
                 # Artificially instruct parse how to handle this new string.
                 _parse_memo[string] = (
@@ -216,8 +216,8 @@ def concat(ind_str, dep_str):
                         nltk.tree.Tree("AdvP", [
                             nltk.tree.Tree("PrepP", [
                                 "IN",
-                                deepcopy(ind_tree[0][0] if dep_tree[0]
-                                         else dep_tree[1])
+                                deepcopy(ind_tree[0][0] if ind_tree[0]
+                                         else ind_tree[1])
                             ])
                         ])
                     ])
@@ -229,7 +229,6 @@ def concat(ind_str, dep_str):
             else:
                 # Neither is a clause.
                 # TODO: This should never come up after preprocessing.
-                print("HERE")
                 return "%s and %s" % (ind_str, dep_str)
 
 
