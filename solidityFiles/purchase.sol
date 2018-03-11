@@ -1,4 +1,4 @@
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 contract Purchase {
     uint public value;
@@ -48,7 +48,7 @@ contract Purchase {
         onlySeller
         inState(State.Created)
     {
-        Aborted();
+        emit Aborted();
         state = State.Inactive;
         seller.transfer(this.balance);
     }
@@ -63,7 +63,7 @@ contract Purchase {
         condition(msg.value == (2 * value))
         payable
     {
-        PurchaseConfirmed();
+        emit PurchaseConfirmed();
         buyer = msg.sender;
         state = State.Locked;
     }
@@ -75,7 +75,7 @@ contract Purchase {
         onlyBuyer
         inState(State.Locked)
     {
-        ItemReceived();
+        emit ItemReceived();
         // It is important to change the state first because
         // otherwise, the contracts called using `send` below
         // can call in again here.

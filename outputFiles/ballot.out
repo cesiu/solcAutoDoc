@@ -1,0 +1,13 @@
+winning vote count is 0 after sender is voters list at the money sender after require to is not equal to the money sender while voters list at to's delegate is not equal to 0 and loop to is voters list at to's delegate after chairperson is the money sender before voters list at chairperson's weight is 1 and for i is 0, i is less than proposal names's length, add one to i and loop proposals's push proposal proposal names list at i 0
+
+Then, endloop require the money sender is equal to chairperson and not voters list at voter's voted and voters list at voter's weight is equal to 0 and voters list at voter's weight is 1
+
+Then, sender is voters list at the money sender before require not sender's voted
+
+Then, require to is not equal to the money sender and endloop sender's voted is true and sender's delegate is to and delegate is voters list at to and if delegate's voted then proposals list at delegate's vote's vote count gains sender's weight and else delegate's weight gains sender's weight before endif before require not sender's voted and sender's voted is true
+
+Then, sender's vote is proposal before proposals list at proposal's vote count gains sender's weight before for p is 0, p is less than proposals's length, add one to p and loop if proposals list at p's vote count is greater than winning vote count then winning vote count is proposals list at p's vote count
+
+Then, winning proposal is p
+
+Then, endif and endloop winner name is proposals list at winning proposal's name
