@@ -78,6 +78,8 @@ def preproc_clauses(strings):
 
     if len(strings) < 2:
         return strings
+    elif strings[0].strip() == "":
+        return preproc_phrases(strings[1:])
     else:
         ind_tree = parse(strings[0], _grammar)
         dep_tree = parse(strings[1], _grammar)
@@ -108,6 +110,8 @@ def preproc_phrases(strings):
 
     if len(strings) < 2:
         return strings
+    elif strings[0].strip() == "":
+        return preproc_phrases(strings[1:])
     else:
         ind_tree = parse(strings[0], _grammar)
         dep_tree = parse(strings[1], _grammar)
@@ -170,7 +174,7 @@ def concat(ind_str, dep_str):
         if is_clause(*ind_tree):
             if is_clause(*dep_tree):
                 # Both are clauses.
-                string = "%s\n\nThen, %s" % (ind_str, dep_str)
+                string = "%s\n%s" % (ind_str, dep_str)
 
                 # Artificially instruct parse how to handle this new string.
                 _parse_memo[string] = (
