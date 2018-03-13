@@ -1,13 +1,33 @@
-require not ended after highest bid is value after bid's blinded bid is 0 after length is bids list at the money sender's length after beneficiary is beneficiary after  and 
+beneficiary is beneficiary
+bidding end is now added to bidding time before reveal end is bidding end added to reveal time
 
-Then, bidding end is now added to bidding time before reveal end is bidding end added to reveal time and bids list at the money sender's push bid blinded bid the money sent by the sender before require values's length is equal to length and require fake's length is equal to length and require secret's length is equal to length
+bids list at the money sender's push bid blinded bid the money sent by the sender
 
-Then, refund is default value before for i is 0, i is less than length, add one to i and loop bid is bids list at the money sender list at i and value and fake and secret is values list at i fake list at i secret list at i and if bid's blinded bid is not equal to keccak256 value fake secret then endif and refund gains bid's deposit and if not fake and bid's deposit is greater than or equal to value then if place bid the money sender value then refund loses value and endif and endif
+length is bids list at the money sender's length before require values's length is equal to length and require fake's length is equal to length and require secret's length is equal to length
+refund is default value
+Set i is 0 
+Then as long as i is less than length do
+bid is bids list at the money sender list at i before value and fake and secret is values list at i fake list at i secret list at i
+If bid's blinded bid is not equal to keccak256 value fake secret then do do nothing
+This only happens if bid's blinded bid is not equal to keccak256 value fake secret refund gains bid's deposit
+If not fake and bid's deposit is greater than or equal to value then do 
+If place bid the money sender value then do refund loses value 
+This only happens if place bid the money sender value 
+This only happens if not fake and bid's deposit is greater than or equal to value bid's blinded bid is 0
+Each time that happens add one to i and this continues as long as i is less than length 
+the money sender's transfer refund
 
-Then, endloop and the money sender's transfer refund if value is less than or equal to highest bid then false endif and if highest bidder is not equal to 0 then pending returns list at highest bidder gains highest bid before endif
+If value is less than or equal to highest bid then do false
+This only happens if value is less than or equal to highest bid 
+If highest bidder is not equal to 0 then do pending returns list at highest bidder gains highest bid
+This only happens if highest bidder is not equal to 0 highest bid is value
+highest bidder is bidder before true
 
-Then, highest bidder is bidder
+amount is pending returns list at the money sender
+If amount is greater than 0 then do pending returns list at the money sender is 0 before the money sender's transfer amount
+This only happens if amount is greater than 0 
 
-Then, true amount is pending returns list at the money sender before if amount is greater than 0 then pending returns list at the money sender is 0 and the money sender's transfer amount and endif before auction ended highest bidder highest bid
+require not ended before auction ended highest bidder highest bid
+ended is true before beneficiary's transfer highest bid
 
-Then, ended is true before beneficiary's transfer highest bid
+
