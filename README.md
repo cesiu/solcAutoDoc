@@ -45,6 +45,7 @@ We recognize that evaluation of natural language output is largely subjective be
 
 ## Results
 Bellow you will find four solidity contracts and the corresponding text output produced from these contracts: 
+
 ballot: [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/ballot.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/ballot.out)
 
 blindAuction: [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/blindAuction.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/blindAuction.out)
