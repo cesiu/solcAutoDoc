@@ -1,6 +1,8 @@
 # Automatic Documentation of Solidity Code
 Eric LaBouve, Chris Siu, Justin Kehl, Lenoy Avidan
+
 California Polytechnic University: San Luis Obispo
+
 CSC570: Winter 2018
 
 ## Abstract
@@ -42,6 +44,15 @@ We recognize that evaluation of natural language output is largely subjective be
 
 
 ## Results
+Bellow you will find four solidity contracts and the corresponding text output produced from these contracts: 
+ballot: [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/ballot.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/ballot.out)
+
+blindAuction: [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/blindAuction.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/blindAuction.out)
+
+purchase [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/purchase.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/purchase.out)
+
+simpleAuction: [Code](https://github.com/cesiu/csc570winter18/blob/master/solidityFiles/simpleAuction.sol) [Description](https://github.com/cesiu/csc570winter18/blob/master/outputFiles/simpleAuction.out)
+
 The results of the study can be found [here](https://docs.google.com/spreadsheets/d/16RqYyBzWThm0wHQeoIkOsBNGLkTVI0JxwzLF7e5nnUI/edit?usp=sharing)
 
 ## References:
